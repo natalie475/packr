@@ -819,100 +819,82 @@ const MY_MEDICATIONS = [
     sky.appendChild(el);
   });
 
-  // Plane element
+  // Plane element — chunky cartoon side-view
   const planeWrap = document.createElement('div');
   planeWrap.id = 'plane-wrap';
-  planeWrap.style.cssText = 'position:absolute;width:80px;height:80px;';
-  planeWrap.innerHTML = `<svg id="plane-svg" viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
-    <g transform="translate(40,40)">
-      <ellipse cx="0" cy="0" rx="28" ry="8" fill="#dceef8" stroke="#2a5fa8" stroke-width="1.2"/>
-      <path d="M20,0 Q32,-2 36,0 Q32,2 20,0" fill="#c8e0f4" stroke="#2a5fa8" stroke-width="1"/>
-      <path d="M-8,-8 L6,-8 L10,0 L6,8 L-8,8 Z" fill="#dceef8" stroke="#2a5fa8" stroke-width="1"/>
-      <path d="M14,-2 L24,-10 L27,-10 L20,0 Z" fill="#b8d4ec" stroke="#2a5fa8" stroke-width="0.8"/>
-      <path d="M14,2 L24,10 L27,10 L20,0 Z" fill="#b8d4ec" stroke="#2a5fa8" stroke-width="0.8"/>
-      <path d="M24,-1 L30,-5 L32,-5 L28,0 Z" fill="#b8d4ec" stroke="#2a5fa8" stroke-width="0.7"/>
-      <path d="M24,1 L30,5 L32,5 L28,0 Z" fill="#b8d4ec" stroke="#2a5fa8" stroke-width="0.7"/>
-      <rect x="-6" y="-4" width="5" height="3" rx="1" fill="#a0c8e8" stroke="#2a5fa8" stroke-width="0.6"/>
-      <rect x="0" y="-4" width="5" height="3" rx="1" fill="#a0c8e8" stroke="#2a5fa8" stroke-width="0.6"/>
-      <rect x="6" y="-4" width="5" height="3" rx="1" fill="#a0c8e8" stroke="#2a5fa8" stroke-width="0.6"/>
-    </g>
+  planeWrap.style.cssText = 'position:absolute;width:120px;height:80px;';
+  planeWrap.innerHTML = `<svg id="plane-svg" viewBox="0 0 120 80" xmlns="http://www.w3.org/2000/svg" style="width:120px;height:80px;transform-origin:60px 40px;">
+    <!-- fuselage -->
+    <path d="M18,36 Q18,22 36,22 L88,24 Q100,24 106,30 Q112,36 106,42 Q100,48 88,48 L36,50 Q18,50 18,36 Z" fill="white" stroke="#3d2b1f" stroke-width="3" stroke-linejoin="round"/>
+    <!-- nose bump -->
+    <path d="M88,24 Q106,26 110,32 Q114,36 110,40 Q106,46 88,48" fill="#e8e0d8" stroke="#3d2b1f" stroke-width="3" stroke-linejoin="round"/>
+    <!-- cockpit windows -->
+    <ellipse cx="94" cy="33" rx="5" ry="4" fill="#6b8fba" stroke="#3d2b1f" stroke-width="2"/>
+    <ellipse cx="86" cy="32" rx="4" ry="3.5" fill="#6b8fba" stroke="#3d2b1f" stroke-width="2"/>
+    <!-- cabin windows row -->
+    <rect x="44" y="28" width="7" height="5" rx="2" fill="#6b8fba" stroke="#3d2b1f" stroke-width="1.5"/>
+    <rect x="55" y="28" width="7" height="5" rx="2" fill="#6b8fba" stroke="#3d2b1f" stroke-width="1.5"/>
+    <rect x="66" y="28" width="7" height="5" rx="2" fill="#6b8fba" stroke="#3d2b1f" stroke-width="1.5"/>
+    <rect x="77" y="28" width="6" height="5" rx="2" fill="#6b8fba" stroke="#3d2b1f" stroke-width="1.5"/>
+    <!-- main wing -->
+    <path d="M52,46 L28,68 L20,68 L38,46 Z" fill="#e8e0d8" stroke="#3d2b1f" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M52,46 L28,68 L20,68 L38,46 Z" fill="white" stroke="#3d2b1f" stroke-width="3" stroke-linejoin="round"/>
+    <!-- wing engine -->
+    <ellipse cx="34" cy="58" rx="8" ry="5" fill="#555" stroke="#3d2b1f" stroke-width="2"/>
+    <ellipse cx="34" cy="58" rx="5" ry="3.5" fill="#333"/>
+    <!-- tail fin vertical -->
+    <path d="M22,36 L14,16 L28,22 L28,36 Z" fill="white" stroke="#3d2b1f" stroke-width="3" stroke-linejoin="round"/>
+    <!-- tail fin horizontal -->
+    <path d="M22,40 L8,50 L8,56 L26,46 Z" fill="#e8e0d8" stroke="#3d2b1f" stroke-width="3" stroke-linejoin="round"/>
+    <!-- tail engine -->
+    <ellipse cx="20" cy="43" rx="5" ry="3.5" fill="#555" stroke="#3d2b1f" stroke-width="1.5"/>
+    <ellipse cx="20" cy="43" rx="3" ry="2.2" fill="#333"/>
   </svg>`;
   sky.appendChild(planeWrap);
 
-  let px = -100, py = 45;
   const vw = window.innerWidth;
   const vh = window.innerHeight;
-
-  // Trail dots
   const trails = [];
-  for (let i = 0; i < 8; i++) {
+  for (let i = 0; i < 10; i++) {
     const d = document.createElement('div');
     d.className = 'trail-dot';
     sky.appendChild(d);
-    trails.push({ el: d, x: -200, y: -200 });
+    trails.push({ el: d });
   }
 
   let frame = 0;
-  let phase = 'fly-in'; // fly-in, loop, fly-out
-  let loopAngle = 0;
-  let loopCenterX, loopCenterY;
-  let planeFacing = 0; // degrees
+  let px = -140;
+  const midY = vh * 0.42;
 
   function animLoop() {
     frame++;
-    let svgRot = 0;
+    px += 4.5;
+    const py = midY + Math.sin(frame * 0.04) * 8;
 
-    if (phase === 'fly-in') {
-      px += 3.5;
-      py = vh * 0.45 + Math.sin(frame * 0.04) * 8;
-      if (px > vw * 0.55) {
-        phase = 'loop';
-        loopCenterX = px;
-        loopCenterY = py - 50;
-        loopAngle = 0;
-      }
-    } else if (phase === 'loop') {
-      loopAngle += 0.055;
-      const r = 50;
-      px = loopCenterX + Math.sin(loopAngle) * r;
-      py = loopCenterY - Math.cos(loopAngle) * r;
-      svgRot = (loopAngle * 180 / Math.PI) - 90;
-      if (loopAngle >= Math.PI * 2) {
-        phase = 'fly-out';
-      }
-    } else {
-      px += 4.5;
-      py = loopCenterY + 50 + Math.sin(frame * 0.03) * 5;
-      svgRot = 0;
-    }
-
-    // Update plane position & rotation
-    planeWrap.style.left = (px - 40) + 'px';
+    planeWrap.style.left = (px - 60) + 'px';
     planeWrap.style.top = (py - 40) + 'px';
-    document.getElementById('plane-svg').style.transform = `rotate(${svgRot}deg)`;
 
-    // Trail
+    // Dashed trail
     trails.forEach((t, i) => {
-      const age = i + 1;
-      t.x = px - age * 9 - 20;
-      t.y = py + (Math.random() - 0.5) * 4;
-      t.el.style.left = t.x + 'px';
-      t.el.style.top = t.y + 'px';
-      t.el.style.opacity = (0.5 - i * 0.06).toString();
-      t.el.style.width = t.el.style.height = (4 - i * 0.3) + 'px';
+      t.el.style.left = (px - (i * 14) - 20) + 'px';
+      t.el.style.top = py + 'px';
+      t.el.style.opacity = (0.55 - i * 0.05).toString();
+      const sz = i % 2 === 0 ? 5 : 0;
+      t.el.style.width = sz + 'px';
+      t.el.style.height = sz + 'px';
     });
 
-    if (phase !== 'fly-out' || px < vw + 100) {
+    if (px < vw + 160) {
       requestAnimationFrame(animLoop);
     } else {
       setTimeout(() => {
         document.getElementById('intro').classList.add('out');
         document.getElementById('app').classList.add('visible');
-      }, 300);
+      }, 200);
     }
   }
 
-  setTimeout(() => requestAnimationFrame(animLoop), 800);
+  setTimeout(() => requestAnimationFrame(animLoop), 400);
 })();
 
 // ── STEP NAV ──
@@ -935,7 +917,7 @@ function goToDump() {
   // Set prompt context
   const extra = document.getElementById('dump-prompt-extra');
   if (state.outfitStyle === 'by-day') {
-    extra.textContent = `Since you've planned by day, describe each day's outfit and I'll break it out for you.`;
+    extra.textContent = `Walk me through each day — what are you wearing? Don't worry if some days are vague, just tell me what you know.`;
   } else {
     extra.textContent = `Just brain dump — items, vibes, occasions. I'll sort it all out.`;
   }
@@ -1044,7 +1026,7 @@ Return ONLY valid JSON with this exact structure, no explanation, no markdown fe
 }
 
 Rules:
-- outfits_by_day: only include if the user planned by day, otherwise return empty array []
+- outfits_by_day: only include if the user planned by day, otherwise return empty array []. IMPORTANT: For any day the user describes as vague, uncertain, "not sure", "TBD", "maybe", "probably just casual" or similar — skip that day entirely. Do NOT include it in the array at all. Only include days where the user has specified actual items.
 - clothes: consolidated master list of all clothing items (deduplicated)
 - shoes: all shoe items
 - outerwear: jackets, coats, cardigans etc

@@ -1120,7 +1120,7 @@ Return ONLY valid JSON with this exact structure, no explanation, no markdown fe
 
 Rules:
 - outfits_by_day: only include if the user planned by day, otherwise return empty array []. IMPORTANT: For any day the user describes as vague, uncertain, "not sure", "TBD", "maybe", "probably just casual" or similar — skip that day entirely. Do NOT include it in the array at all. Only include days where the user has specified actual items.
-- clothes: consolidated master list of ALL clothing items including outerwear, jackets, coats, cardigans (deduplicated). Include underwear and socks counts.
+- clothes: consolidated master list of ALL clothing items including outerwear, jackets, coats, cardigans (deduplicated). Do NOT include underwear or socks — those are handled separately.
 - shoes: all footwear
 - other: anything else the user mentions that isn't clothes or shoes — bags, accessories, jewelry, belts, hats, sunglasses etc.
 - Be specific and practical. If they say "a couple dinner outfits" expand to actual items.
@@ -1132,8 +1132,6 @@ Rules:
 - Duration: ${state.days} days
 - Trip type: ${state.tripType === 'event' ? 'specific event' : 'fun trip'}
 - Outfit planning: ${state.outfitStyle === 'by-day' ? 'planned by day' : 'vibes only'}
-- Underwear/socks buffer: +${state.buffer} extra
-
 What they want to pack:
 ${state.dump}`;
 

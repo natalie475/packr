@@ -123,8 +123,13 @@
   #app.visible { opacity: 1; }
 
   .app-header {
-    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
     margin-bottom: 48px;
+    width: 100%;
+    max-width: 540px;
   }
   .app-logo {
     font-family: 'Fraunces', serif;
@@ -606,8 +611,8 @@
   .settings-add:hover { border-color: var(--ink); color: var(--ink); }
   .settings-save { width: 100%; background: var(--ink); color: var(--paper); border: none; border-radius: 2px; padding: 12px; font-family: 'DM Mono', monospace; font-size: 12px; letter-spacing: 0.08em; cursor: pointer; margin-top: 8px; transition: opacity 0.15s; }
   .settings-save:hover { opacity: 0.8; }
-  .gear-btn { position: absolute; top: 0; right: 0; background: transparent; border: none; color: var(--ink-faint); cursor: pointer; padding: 4px; transition: color 0.15s, transform 0.3s; }
-  .gear-btn:hover { color: var(--ink); transform: rotate(30deg); }
+  .gear-btn { position: absolute; top: 50%; right: 0; transform: translateY(-50%); background: transparent; border: none; color: var(--ink-faint); cursor: pointer; padding: 4px; transition: color 0.15s; }
+  .gear-btn:hover { color: var(--ink); }
 
   /* ── RESPONSIVE ── */
   @media (max-width: 600px) {
@@ -629,7 +634,7 @@
 
 <!-- MAIN APP -->
 <div id="app">
-  <div class="app-header" style="position:relative;">
+  <div class="app-header">
     <div class="app-logo">pack<span>r</span></div>
     <button class="gear-btn" onclick="openSettings()" title="Settings">
       <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">

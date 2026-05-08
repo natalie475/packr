@@ -531,6 +531,69 @@
     transition: width 0.3s ease;
   }
 
+  /* ── Quick-add bar ── */
+  .quick-add-wrap {
+    margin-top: 28px;
+    padding: 18px 0 0;
+    border-top: 1px solid var(--line);
+  }
+  .quick-add-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-bottom: 10px;
+  }
+  .quick-add-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  .quick-add-row input[type="text"] {
+    flex: 1;
+    border: none;
+    border-bottom: 1px solid var(--ink-faint);
+    padding: 8px 0;
+    font-family: inherit;
+    font-size: 14px;
+    background: transparent;
+    color: var(--ink);
+    outline: none;
+  }
+  .quick-add-row input[type="text"]:focus { border-bottom-color: var(--ink); }
+  .quick-add-row select {
+    border: 1px solid var(--ink-faint);
+    border-radius: 2px;
+    padding: 6px 8px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    background: transparent;
+    color: var(--ink);
+    cursor: pointer;
+    outline: none;
+  }
+  .quick-add-btn {
+    background: var(--ink);
+    color: var(--paper);
+    border: none;
+    border-radius: 2px;
+    padding: 8px 16px;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .quick-add-btn:hover { opacity: 0.8; }
+
+  /* Inline item editing */
+  .list-item-text[contenteditable="true"] {
+    outline: none;
+    border-bottom: 1px dashed var(--ink-faint);
+    padding-bottom: 1px;
+    cursor: text;
+  }
+
   .list-actions {
     display: flex; gap: 10px; flex-wrap: wrap;
     margin-top: 32px; padding-top: 20px;
@@ -799,6 +862,30 @@
 
     <div id="list-sections"></div>
 
+    <!-- Quick-add bar -->
+    <div class="quick-add-wrap" id="quick-add-wrap">
+      <div class="quick-add-label">add to list</div>
+      <div class="quick-add-row">
+        <input type="text" id="quick-add-input" placeholder="e.g. rain jacket" autocomplete="off" />
+        <button class="mic-btn" id="quick-mic-btn" onclick="toggleQuickMic()" title="Voice input">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="4.5" y="1" width="5" height="8" rx="2.5" stroke="currentColor" stroke-width="1.2"/>
+            <path d="M2 7.5C2 10 4 12 7 12C10 12 12 10 12 7.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+            <line x1="7" y1="12" x2="7" y2="13.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+          </svg>
+        </button>
+        <select id="quick-add-section">
+          <option value="Clothing">Clothing</option>
+          <option value="Shoes">Shoes</option>
+          <option value="Toiletries">Toiletries</option>
+          <option value="Electronics">Electronics</option>
+          <option value="Other">Other</option>
+        </select>
+        <button class="quick-add-btn" onclick="quickAddItem()">Add</button>
+      </div>
+      <div class="mic-status" id="quick-mic-status"></div>
+    </div>
+
     <div class="list-actions">
       <button class="action-btn" onclick="resetAll()">← Start over</button>
       <button class="action-btn" onclick="copyList()">Copy list</button>
@@ -1032,6 +1119,7 @@ function selectNum(btn, val) {
 
 // Save inputs on change
 document.getElementById('destination').addEventListener('input', e => state.destination = e.target.value);
+document.getElementById('quick-add-input').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); quickAddItem(); } });
 
 // ── Enter key navigation ──────────────────────────────────────────────────────
 // On desktop, Enter advances the question flow.
@@ -1276,21 +1364,148 @@ function renderList(data) {
         row.classList.toggle('packed');
         updateProgress();
       };
+      makeItemEditable(row.querySelector('.list-item-text'));
       secEl.appendChild(row);
     });
     sectionsEl.appendChild(secEl);
   });
 
-  function updateProgress() {
-    const all = document.querySelectorAll('.list-item');
-    const packed = document.querySelectorAll('.list-item.packed');
-    const pct = all.length ? Math.round((packed.length / all.length) * 100) : 0;
-    document.getElementById('progress-text').textContent = `${packed.length} / ${all.length}`;
-    document.getElementById('progress-fill').style.width = pct + '%';
-  }
   updateProgress();
 
   output.scrollIntoView({ behavior: 'smooth' });
+}
+
+// ── Quick-add to list ────────────────────────────────────────────────────────
+function quickAddItem() {
+  const input = document.getElementById('quick-add-input');
+  const sectionName = document.getElementById('quick-add-section').value;
+  const text = input.value.trim();
+  if (!text) return;
+
+  // Find or create the target section
+  const sectionsEl = document.getElementById('list-sections');
+  let targetSec = null;
+  sectionsEl.querySelectorAll('.list-section').forEach(sec => {
+    const title = sec.querySelector('.list-section-title');
+    if (title && title.textContent === sectionName) targetSec = sec;
+  });
+
+  if (!targetSec) {
+    // Create new section if it doesn't exist yet
+    targetSec = document.createElement('div');
+    targetSec.className = 'list-section';
+    targetSec.innerHTML = `<div class="list-section-title">${sectionName}</div>`;
+    sectionsEl.appendChild(targetSec);
+  }
+
+  // Add the new item row
+  const row = document.createElement('div');
+  row.className = 'list-item';
+  row.innerHTML = `
+    <div class="list-check"><div class="list-check-mark"></div></div>
+    <div class="list-item-text">${text}</div>
+  `;
+  row.onclick = () => { row.classList.toggle('packed'); updateProgress(); };
+  makeItemEditable(row.querySelector('.list-item-text'));
+  targetSec.appendChild(row);
+
+  input.value = '';
+  input.focus();
+  updateProgress();
+}
+
+// Enter key in quick-add input triggers add
+document.addEventListener('DOMContentLoaded', () => {
+  const qi = document.getElementById('quick-add-input');
+  if (qi) qi.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); quickAddItem(); } });
+});
+
+// ── Quick-add mic ─────────────────────────────────────────────────────────────
+let quickRecognition = null;
+let quickMicActive = false;
+
+function toggleQuickMic() {
+  if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
+    alert('Voice input is not supported in this browser. Try Chrome.');
+    return;
+  }
+  if (quickMicActive) {
+    quickRecognition && quickRecognition.stop();
+    return;
+  }
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  quickRecognition = new SpeechRecognition();
+  quickRecognition.continuous = false;
+  quickRecognition.interimResults = true;
+  quickRecognition.lang = 'en-US';
+  const btn = document.getElementById('quick-mic-btn');
+  const status = document.getElementById('quick-mic-status');
+  const input = document.getElementById('quick-add-input');
+
+  quickRecognition.onstart = () => {
+    quickMicActive = true;
+    btn.classList.add('recording');
+    status.textContent = 'Listening…';
+  };
+  quickRecognition.onresult = (e) => {
+    let final = '', interim = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      if (e.results[i].isFinal) final += e.results[i][0].transcript;
+      else interim = e.results[i][0].transcript;
+    }
+    input.value = (final || interim).trim();
+    if (final) status.textContent = '';
+    else status.textContent = interim;
+  };
+  quickRecognition.onend = () => {
+    quickMicActive = false;
+    btn.classList.remove('recording');
+    status.textContent = '';
+  };
+  quickRecognition.onerror = () => {
+    quickMicActive = false;
+    btn.classList.remove('recording');
+    status.textContent = '';
+  };
+  quickRecognition.start();
+}
+
+// ── Double-click to edit list items ──────────────────────────────────────────
+function makeItemEditable(textEl) {
+  textEl.title = 'Double-click to edit';
+  textEl.addEventListener('dblclick', (e) => {
+    e.stopPropagation();
+    textEl.contentEditable = 'true';
+    textEl.focus();
+    // Move cursor to end
+    const range = document.createRange();
+    range.selectNodeContents(textEl);
+    range.collapse(false);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+  });
+  textEl.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); textEl.blur(); }
+    if (e.key === 'Escape') { textEl.blur(); }
+  });
+  textEl.addEventListener('blur', () => {
+    textEl.contentEditable = 'false';
+    if (!textEl.textContent.trim()) {
+      textEl.closest('.list-item').remove();
+      updateProgress();
+    }
+  });
+}
+
+function updateProgress() {
+  const all = document.querySelectorAll('.list-item');
+  const packed = document.querySelectorAll('.list-item.packed');
+  const pct = all.length ? Math.round((packed.length / all.length) * 100) : 0;
+  const pt = document.getElementById('progress-text');
+  const pf = document.getElementById('progress-fill');
+  if (pt) pt.textContent = `${packed.length} / ${all.length}`;
+  if (pf) pf.style.width = pct + '%';
 }
 
 function resetAll() {

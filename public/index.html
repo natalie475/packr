@@ -1068,8 +1068,10 @@ document.addEventListener('keydown', function(e) {
   // Brain dump textarea — Enter should behave normally (newline), not advance
   if (document.activeElement && document.activeElement.id === 'brain-dump') return;
 
-  // Don't fire if focus is on a button (let Space/Enter handle it natively)
-  if (document.activeElement && document.activeElement.tagName === 'BUTTON') return;
+  // Don't fire if focus is on a back/next nav button (let it handle natively)
+  const focused = document.activeElement;
+  if (focused && focused.tagName === 'BUTTON' &&
+      (focused.classList.contains('btn-next') || focused.classList.contains('btn-back'))) return;
 
   // Advance the question flow based on currentStep
   e.preventDefault();

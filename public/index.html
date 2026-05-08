@@ -1032,6 +1032,53 @@ function selectNum(btn, val) {
 
 // Save inputs on change
 document.getElementById('destination').addEventListener('input', e => state.destination = e.target.value);
+
+// ── Enter key navigation ──────────────────────────────────────────────────────
+// On desktop, Enter advances the question flow.
+// Inside the settings overlay, Enter in a text input adds a new item row instead.
+document.addEventListener('keydown', function(e) {
+  if (e.key !== 'Enter') return;
+
+  // If settings overlay is open, let Enter add a new item in whichever section
+  // the user is currently typing in — handled per-section below.
+  const settingsOverlay = document.getElementById('settings-overlay');
+  if (settingsOverlay && settingsOverlay.classList.contains('open')) {
+    // Only intercept if focus is on a settings text input
+    const active = document.activeElement;
+    if (active && active.closest && active.closest('.settings-section')) {
+      e.preventDefault();
+      // Find the + button in the same section and click it
+      const section = active.closest('.settings-section');
+      if (section) {
+        const addBtn = section.querySelector('.settings-add');
+        if (addBtn) {
+          addBtn.click();
+          // Focus the newly added input
+          setTimeout(() => {
+            const inputs = section.querySelectorAll('.settings-item input[type="text"]');
+            const last = inputs[inputs.length - 1];
+            if (last) last.focus();
+          }, 30);
+        }
+      }
+    }
+    return; // Don't advance questions while settings is open
+  }
+
+  // Brain dump textarea — Enter should behave normally (newline), not advance
+  if (document.activeElement && document.activeElement.id === 'brain-dump') return;
+
+  // Don't fire if focus is on a button (let Space/Enter handle it natively)
+  if (document.activeElement && document.activeElement.tagName === 'BUTTON') return;
+
+  // Advance the question flow based on currentStep
+  e.preventDefault();
+  if (currentStep === 1) goToStep(2);
+  else if (currentStep === 2) goToStep(3);
+  else if (currentStep === 3) goToStep(4);
+  else if (currentStep === 4) goToStep(5);
+  else if (currentStep === 5) goToDump();
+});
 document.getElementById('days').addEventListener('input', e => state.days = parseInt(e.target.value) || 0);
 document.getElementById('brain-dump').addEventListener('input', e => state.dump = e.target.value);
 
